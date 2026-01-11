@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-ump$y*9gj5@z^7yor@r89^6o$0z%443yt3q)m5ggju8tmjcy2r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "cubetrainer.my.to"]
+ALLOWED_HOSTS = ["127.0.0.1", "cubetrainer.k.vu"]
 
 
 # Application definition
