@@ -1,4 +1,5 @@
 from django.db import models
+from django.forms import ValidationError
 from django.utils import timezone
 
 
@@ -18,12 +19,25 @@ class Session(models.Model):
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     discipline = models.ForeignKey(Discipline, on_delete=models.CASCADE)
 
-    name = models.CharField(max_length=100, unique=True, verbose_name="Session")
+    name = models.CharField(max_length=100, verbose_name="Session", blank=True)
     is_system = models.BooleanField(default=False, verbose_name="Base session")
     last_activity = models.DateTimeField(auto_now=True, verbose_name="Last activity")
 
     def __str__(self) -> str:
         return str(self.name)
+
+    def clean(self):
+        if not self.is_system and not self.name:
+            raise ValidationError({"name": "Name is required for non-system sessions."})
+
+    def save(self, *args, **kwargs):
+        if self.is_system and not self.name:
+            self.name = "General"
+
+        if not self.id:
+            self.last_activity = timezone.now()
+
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ["-last_activity"]
