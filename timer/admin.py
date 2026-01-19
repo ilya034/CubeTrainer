@@ -4,7 +4,7 @@ from .models import Discipline, Session, Attempt
 
 @admin.register(Discipline)
 class DisciplineAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug")
+    list_display = ("name", "slug", "scrambler_type")
     prepopulated_fields = {"slug": ("name",)}
 
 

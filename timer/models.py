@@ -6,8 +6,8 @@ from django.utils import timezone
 class Discipline(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Discipline")
     slug = models.SlugField(max_length=100, unique=True, verbose_name="Api name")
-    scrambler = models.CharField(
-        max_length=50, default="333", verbose_name="Scrambler type"
+    scrambler_type = models.CharField(
+        max_length=50, default="333", verbose_name="Scrambler type for scrambow"
     )
     # ToDo icon url
 
