@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class Discipline(models.Model):
@@ -25,7 +26,7 @@ class Session(models.Model):
         return str(self.name)
 
     class Meta:
-        ordering = ["last_activity"]
+        ordering = ["-last_activity"]
         unique_together = ["user", "discipline", "name"]
 
 
@@ -55,6 +56,18 @@ class Attempt(models.Model):
         help_text="Optional user comment for this attempt",
     )
 
+    def save(self, *args, **kwargs):
+        self.session.last_activity = timezone.now()
+        self.session.save(update_fields=["last_activity"])
+        super().save(*args, **kwargs)
+
+    @property
+    def time_with_penalty(self):
+        if self.penalty == self.PenaltyChoices.DNF:
+            return float("inf")
+        if self.penalty == self.PenaltyChoices.PLUS_2:
+            return self.time_ms + 2000
+        return self.time_ms
+
     class Meta:
-        ordering = ["created_at"]
-        unique_together = ["session", "scramble"]
+        ordering = ["-created_at"]
