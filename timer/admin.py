@@ -4,13 +4,13 @@ from .models import Discipline, Session, Attempt
 
 @admin.register(Discipline)
 class DisciplineAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "scrambler_type")
+    list_display = ("id", "name", "slug", "scrambler_type")
     prepopulated_fields = {"slug": ("name",)}
 
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
-    list_display = ("name", "user", "discipline", "is_system", "last_activity")
+    list_display = ("id", "name", "user", "discipline", "is_system", "last_activity")
     list_filter = ("discipline", "is_system", "last_activity")
     search_fields = ("user__username", "name")
 

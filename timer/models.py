@@ -9,7 +9,6 @@ class Discipline(models.Model):
     scrambler_type = models.CharField(
         max_length=50, default="333", verbose_name="Scrambler type for scrambow"
     )
-    # ToDo icon url
 
     def __str__(self) -> str:
         return str(self.name)
@@ -37,7 +36,7 @@ class Session(models.Model):
         if self.is_system and not self.name:
             self.name = "General"
 
-        if not self.name:
+        if not self.id:
             self.last_activity = timezone.now()
 
         super().save(*args, **kwargs)

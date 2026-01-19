@@ -24,7 +24,7 @@ class AttemptSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["created_at"]
 
-    def get_time_with_penalty(self, obj):
+    def get_final_time_display(self, obj):
         if obj.penalty == "DNF":
             return "DNF"
         val = obj.time_ms

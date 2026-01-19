@@ -1,7 +1,7 @@
 import { ChevronLeft, RefreshCw } from 'lucide-react';
 import { clsx } from 'clsx';
 
-export const ScrambleDisplay = ({ scramble, onGenerate, isHidden }) => {
+export const ScrambleDisplay = ({ scramble, onGenerate, onPrevious, isHidden }) => {
   return (
     <div className={clsx(
       "w-full flex justify-center px-4 transition-opacity duration-300 z-10",
@@ -11,6 +11,7 @@ export const ScrambleDisplay = ({ scramble, onGenerate, isHidden }) => {
       <div className="flex items-center justify-between gap-2 md:gap-6 w-full max-w-5xl">
          
          <button 
+           onClick={onPrevious}
            className="p-2 md:p-3 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition flex-shrink-0"
            title="Previous Scramble"
          >

@@ -21,7 +21,15 @@ class SessionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Session.objects.filter(user=self.request.user)
+        user = self.request.user
+        queryset = Session.objects.filter(user=user)
+
+        # Example: GET /api/v1/sessions/?discipline_slug=333
+        discipline_slug = self.request.query_params.get("discipline_slug")
+        if discipline_slug:
+            queryset = queryset.filter(discipline__slug=discipline_slug)
+
+        return queryset
 
     def perform_create(self, serializer):
         discipline_slug = self.request.data.get("discipline_slug")
