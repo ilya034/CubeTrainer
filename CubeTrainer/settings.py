@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "users",
     "timer",
-    "analutics",
+    "analytics",
 ]
 
 MIDDLEWARE = [
