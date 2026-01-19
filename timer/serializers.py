@@ -5,7 +5,7 @@ from .models import Discipline, Session, Attempt
 class DisciplineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Discipline
-        fields = ["id", "name", "slug"]
+        fields = ["id", "name", "slug", "scrambler"]
 
 
 class AttemptSerializer(serializers.ModelSerializer):
