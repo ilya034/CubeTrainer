@@ -62,3 +62,14 @@ class AttemptViewSet(viewsets.ModelViewSet):
         session_id = self.request.data.get("session_id")
         session = get_object_or_404(Session, id=session_id, user=self.request.user)
         serializer.save(session=session)
+
+    def partial_update(self, request, *args, **kwargs):
+        allowed_fields = {"penalty", "comment"}
+
+        if "time_ms" in request.data or "scramble" in request.data:
+            return Response(
+                {"detail": "Changing time or scramble is not allowed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return super().partial_update(request, *args, **kwargs)

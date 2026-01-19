@@ -6,7 +6,9 @@ from django.utils import timezone
 class Discipline(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Discipline")
     slug = models.SlugField(max_length=100, unique=True, verbose_name="Api name")
-    scrambler = models.CharField(max_length=50, default="333", verbose_name="Scrambler type")
+    scrambler = models.CharField(
+        max_length=50, default="333", verbose_name="Scrambler type"
+    )
     # ToDo icon url
 
     def __str__(self) -> str:
@@ -35,7 +37,7 @@ class Session(models.Model):
         if self.is_system and not self.name:
             self.name = "General"
 
-        if not self.id:
+        if not self.name:
             self.last_activity = timezone.now()
 
         super().save(*args, **kwargs)

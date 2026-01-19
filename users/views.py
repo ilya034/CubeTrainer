@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from timer.models import Discipline, Session, Attempt
 from .serializers import SyncDataSerializer
 
@@ -18,46 +19,42 @@ class SyncGuestDataView(APIView):
         data = serializer.validated_data
         user = request.user
 
-        try:
-            with transaction.atomic():
-                for session_data in data["sessions"]:
-                    discipline = get_object_or_404(
-                        Discipline, slug=session_data["discipline_slug"]
-                    )
+        with transaction.atomic():
+            for guest_session in serializer.validated_data["sessions"]:
+                disc_slug = guest_session["discipline_slug"]
+                sess_name = guest_session["name"]
 
-                    session, created = Session.objects.get_or_create(
-                        user=user,
-                        discipline=discipline,
-                        name=session_data["name"],
-                        defaults={"is_system": (session_data["name"] == "General")},
-                    )
+                discipline = get_object_or_404(Discipline, slug=disc_slug)
 
-                    attempts_to_create = []
-                    for solve in session_data["solves"]:
-                        attempts_to_create.append(
+                db_session, _ = Session.objects.get_or_create(
+                    user=request.user,
+                    discipline=discipline,
+                    name=sess_name,
+                    defaults={
+                        "is_system": (sess_name == "General"),
+                        "last_activity": timezone.now(),
+                    },
+                )
+
+                new_solves = []
+                for s in guest_session["solves"]:
+                    exists = Attempt.objects.filter(
+                        session=db_session,
+                        created_at=s["created_at"],
+                        time_ms=s["time_ms"],
+                    ).exists()
+
+                    if not exists:
+                        new_solves.append(
                             Attempt(
-                                session=session,
-                                time_ms=solve["time_ms"],
-                                scramble=solve["scramble"],
-                                penalty=solve.get("penalty", "0"),
-                                created_at=solve["created_at"],
+                                session=db_session,
+                                time_ms=s["time_ms"],
+                                scramble=s["scramble"],
+                                penalty=s["penalty"],
+                                created_at=s["created_at"],
                             )
                         )
 
-                    Attempt.objects.bulk_create(attempts_to_create)
+                Attempt.objects.bulk_create(new_solves)
 
-                    if attempts_to_create:
-                        last_solve = sorted(
-                            attempts_to_create, key=lambda x: x.created_at
-                        )[-1]
-                        session.last_activity = last_solve.created_at
-                        session.save()
-
-            return Response(
-                {"status": "synced", "message": "Guest data imported successfully"}
-            )
-
-        except Exception as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        return Response({"status": "merged"})
