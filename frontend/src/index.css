@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0f0f11;
+  --color-surface: #18181b;
+  --color-primary: #3b82f6;
+  --font-mono: "Roboto Mono", monospace;
+}
+
+body {
+  background-color: var(--color-background);
+  color: #e4e4e7;
+  font-family: system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+}
