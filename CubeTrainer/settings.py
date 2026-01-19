@@ -71,6 +71,7 @@ REST_FRAMEWORK = {
     "DEFAULT_VERSION": "v1",
     "ALLOWED_VERSIONS": ["v1"],
     "VERSION_PARAM": "version",
+    "FORMAT_SUFFIX_PATTERNS": False,
 }
 
 DJOSER = {

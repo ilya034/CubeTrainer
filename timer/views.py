@@ -32,11 +32,6 @@ class SessionViewSet(viewsets.ModelViewSet):
         detail=False, methods=["GET"], url_path="current/(?P<discipline_slug>[^/.]+)"
     )
     def current(self, request, discipline_slug=None):
-        """
-        Smart Switching: Возвращает последнюю активную сессию для дисциплины.
-        Если нет - создает "General".
-        Пример: GET /api/sessions/current/333/
-        """
         user = request.user
         discipline = get_object_or_404(Discipline, slug=discipline_slug)
 
