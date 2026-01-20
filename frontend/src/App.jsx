@@ -9,6 +9,7 @@ import { ScrambleDisplay } from './components/ScrambleDisplay';
 import { TimerDisplay } from './components/TimerDisplay';
 import { ControlBar } from './components/ControlBar';
 import { StatsBar } from './components/StatsBar';
+import { AnalyticsModal } from './components/Modals/AnalyticsModal';
 import { AuthModal } from './components/Modals/AuthModal';
 import { NewSessionModal } from './components/Modals/NewSessionModal';
 import { DeleteConfirmModal } from './components/Modals/DeleteConfirmModal';
@@ -19,16 +20,18 @@ function App() {
 
   const [disciplines, setDisciplines] = useState([]);
   const [sessionsList, setSessionsList] = useState([]);
-  
+
   const [discipline, setDiscipline] = useState('');
   const [scrambleType, setScrambleType] = useState('333');
   const [session, setSession] = useState(null);
-  
+
   const [scramble, setScramble] = useState('');
   const [lastSolve, setLastSolve] = useState(null);
 
   const [modals, setModals] = useState({ auth: false, session: false, delete: false });
   const [authMode, setAuthMode] = useState('login');
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [allSolves, setAllSolves] = useState([]);
 
   useEffect(() => {
     const init = async () => {
@@ -49,7 +52,7 @@ function App() {
         setDiscipline(defaultDisc.slug);
         setScrambleType(defaultDisc.scrambler_type);
       }
-      
+
       setInitLoading(false);
     };
     init();
@@ -74,6 +77,24 @@ function App() {
     loadContext();
   }, [discipline, user, initLoading, disciplines]);
 
+  useEffect(() => {
+    if (isAnalyticsOpen && session) {
+      const fetchSolves = async () => {
+        // const data = await solveService.getAllSolves(user, session.id);
+        // setAllSolves(data);
+
+        if (!user) {
+          const currentSess = await solveService.getSession(session.id, user);
+          setAllSolves(currentSess.solves || []);
+        } else {
+          //TODO: server implementation
+          console.log("Fetching solves from server...");
+        }
+      };
+      fetchSolves();
+    }
+  }, [isAnalyticsOpen, session, user, lastSolve]);
+
   const handleDisciplineChange = (newSlug) => {
     setDiscipline(newSlug);
   };
@@ -93,14 +114,14 @@ function App() {
       console.error("Failed to create session", e);
     }
   };
-  
+
   const generateNewScramble = () => setScramble(generateScramble(scrambleType));
 
   const handlePreviousScramble = async () => {
     if (!session) return;
-  
+
     const last = await solveService.getLastSolve(user, session.id);
-    
+
     if (last && last.scramble) {
       setScramble(last.scramble);
       console.log("Restored scramble from solve ID:", last.id);
@@ -111,10 +132,10 @@ function App() {
 
   const handleFinish = async (timeMs) => {
     if (!session) return;
-    
+
     const tempId = 'temp_' + Date.now();
     setLastSolve({ time: timeMs, penalty: 'NONE', id: tempId, isLoading: true });
-    
+
     const currentScramble = scramble;
     generateNewScramble();
 
@@ -132,13 +153,13 @@ function App() {
 
   const togglePenalty = async (type) => {
     if (!lastSolve || lastSolve.isLoading) return;
-    
+
     const mapToApi = { 'PLUS2': '2', 'DNF': 'DNF', 'NONE': '0' };
     let newUiPenalty = type;
     if (lastSolve.penalty === type) newUiPenalty = 'NONE';
 
     setLastSolve(prev => ({ ...prev, penalty: newUiPenalty }));
-    
+
     try {
       await solveService.updatePenalty(lastSolve.id, mapToApi[newUiPenalty], user, session.id);
     } catch (e) { console.error(e); }
@@ -167,7 +188,7 @@ function App() {
       setModals({ ...modals, auth: false });
     } catch (e) { alert("Auth Error"); }
   };
-  
+
   const handleLogout = () => {
     authService.logout();
     window.location.reload();
@@ -179,10 +200,10 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#0f0f11] text-[#e4e4e7] flex flex-col font-sans selection:bg-blue-500/30">
-      
-      <Header 
+
+      <Header
         isHidden={isRunning}
-        
+
         disciplines={disciplines}
         currentDisciplineSlug={discipline}
         onDisciplineChange={handleDisciplineChange}
@@ -196,8 +217,8 @@ function App() {
       />
 
       <main className="flex-1 flex flex-col relative">
-        <ScrambleDisplay 
-          scramble={scramble} 
+        <ScrambleDisplay
+          scramble={scramble}
           onGenerate={generateNewScramble}
           onPrevious={handlePreviousScramble}
           isHidden={isRunning}
@@ -205,8 +226,8 @@ function App() {
 
         <div className="flex-1 flex flex-col items-center justify-center">
           <TimerDisplay time={time} status={status} lastSolve={lastSolve} />
-          
-          <ControlBar 
+
+          <ControlBar
             isHidden={isRunning || !lastSolve}
             lastSolve={lastSolve}
             onTogglePenalty={togglePenalty}
@@ -214,28 +235,42 @@ function App() {
           />
         </div>
 
-        <StatsBar isHidden={isRunning} />
+        <StatsBar
+          isHidden={isRunning}
+          onOpen={() => setIsAnalyticsOpen(true)}
+        />
       </main>
 
-      <AuthModal 
-        isOpen={modals.auth} 
-        onClose={() => setModals({ ...modals, auth: false })} 
+      <AnalyticsModal
+        isOpen={isAnalyticsOpen}
+        onClose={() => setIsAnalyticsOpen(false)}
+        sessionName={session?.name || 'Unknown'}
+        solves={allSolves}
+        onDeleteSolve={async (id) => {
+          await handleDelete(id);
+          // update allSolves
+        }}
+      />
+
+      <AuthModal
+        isOpen={modals.auth}
+        onClose={() => setModals({ ...modals, auth: false })}
         isLoginMode={authMode === 'login'}
         toggleMode={() => setAuthMode(m => m === 'login' ? 'register' : 'login')}
         onSubmit={handleAuthSubmit}
         onLogout={handleLogout}
         user={user}
       />
-      
-      <NewSessionModal 
-        isOpen={modals.session} 
-        onClose={() => setModals({ ...modals, session: false })} 
+
+      <NewSessionModal
+        isOpen={modals.session}
+        onClose={() => setModals({ ...modals, session: false })}
         onCreate={handleCreateSession}
       />
 
-      <DeleteConfirmModal 
-        isOpen={modals.delete} 
-        onClose={() => setModals({ ...modals, delete: false })} 
+      <DeleteConfirmModal
+        isOpen={modals.delete}
+        onClose={() => setModals({ ...modals, delete: false })}
         onConfirm={handleDelete}
       />
     </div>
