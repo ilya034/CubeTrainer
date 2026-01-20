@@ -80,16 +80,8 @@ function App() {
   useEffect(() => {
     if (isAnalyticsOpen && session) {
       const fetchSolves = async () => {
-        // const data = await solveService.getAllSolves(user, session.id);
-        // setAllSolves(data);
-
-        if (!user) {
-          const currentSess = await solveService.getSession(session.id, user);
-          setAllSolves(currentSess.solves || []);
-        } else {
-          //TODO: server implementation
-          console.log("Fetching solves from server...");
-        }
+        const data = await solveService.getAllSolves(user, session.id);
+        setAllSolves(data);
       };
       fetchSolves();
     }
@@ -162,16 +154,23 @@ function App() {
 
     try {
       await solveService.updatePenalty(lastSolve.id, mapToApi[newUiPenalty], user, session.id);
+      setAllSolves(prev => prev.map(s => s.id === lastSolve.id ? { ...s, penalty: mapToApi[newUiPenalty] } : s));
     } catch (e) { console.error(e); }
   };
 
-  const handleDelete = async () => {
-    if (!lastSolve) return;
+  const handleGlobalDelete = async (solveId) => {
+    if (!session) return;
     try {
-      await solveService.deleteSolve(lastSolve.id, user, session.id);
-      setLastSolve(null);
-      setModals({ ...modals, delete: false });
-    } catch (e) { console.error(e); }
+      await solveService.deleteSolve(solveId, user, session.id);
+      
+      if (lastSolve && lastSolve.id === solveId) {
+        setLastSolve(null);
+        setModals(m => ({ ...m, delete: false }));
+      }
+
+      setAllSolves(prev => prev.filter(s => s.id !== solveId));
+
+    } catch (e) { console.error("Delete failed", e); }
   };
 
   const handleAuthSubmit = async (formData, isLogin) => {
@@ -214,6 +213,8 @@ function App() {
 
         onOpenAuth={() => setModals({ ...modals, auth: true })}
         onNewSessionTrigger={() => setModals({ ...modals, session: true })}
+
+        user={user} // TODO: avatar/name
       />
 
       <main className="flex-1 flex flex-col relative">
@@ -246,10 +247,7 @@ function App() {
         onClose={() => setIsAnalyticsOpen(false)}
         sessionName={session?.name || 'Unknown'}
         solves={allSolves}
-        onDeleteSolve={async (id) => {
-          await handleDelete(id);
-          // update allSolves
-        }}
+        onDeleteSolve={handleGlobalDelete}
       />
 
       <AuthModal
@@ -271,7 +269,7 @@ function App() {
       <DeleteConfirmModal
         isOpen={modals.delete}
         onClose={() => setModals({ ...modals, delete: false })}
-        onConfirm={handleDelete}
+        onConfirm={handleGlobalDelete}
       />
     </div>
   );
