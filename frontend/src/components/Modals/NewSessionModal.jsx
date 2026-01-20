@@ -12,7 +12,7 @@ export const NewSessionModal = ({ isOpen, onClose, onCreate }) => {
         autoFocus
         value={name}
         onChange={e => setName(e.target.value)}
-        placeholder="Session Name (e.g. OH Practice)" 
+        placeholder="Session Name" 
         className="w-full bg-[#0f0f11] border border-gray-700 rounded-lg px-4 py-2 text-white outline-none focus:border-blue-500 mb-6"
       />
       <div className="flex justify-end gap-3">
